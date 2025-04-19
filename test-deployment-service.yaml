@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-server
+  template:
+    metadata:
+      labels:
+        app: my-server
+    spec:
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: nginx-config
+      containers:
+        - name: my-server
+          image: nginx
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/default.conf 
+              subPath: nginx-config.conf 
+              readOnly: true
+          command: ["/bin/sh", "-c"]
+          args: ["nginx -g 'daemon off;'"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  annotations:
+    auto-ingress: "/aaa"
+spec:
+  selector:
+    app: my-server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
